@@ -37,6 +37,7 @@
     "react/jsx-no-bind": 0,
     "eact/wrap-multilines": 0,
     "no-unused-vars": 0,
-    "react/prop-types": 0
+    "react/prop-types": 0,
+    "react-hooks/exhaustive-deps": 0
   }
 }

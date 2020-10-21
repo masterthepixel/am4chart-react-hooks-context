@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import Select from "react-select";
 import moment from "moment";
 import { LAST_TIME_OPTIONS, NETWORK_CHART_DIV } from "../../constants";
+import { Context as DashboardContext } from "../../context/dashboard";
 
 const customStyles = {
   option: (provided, state) => ({
@@ -21,14 +22,55 @@ const customStyles = {
   }),
 };
 
-function NetworkChart({ instance, onSelectDuration }) {
-  console.log("Rendering Network Chart...");
+function NetworkChart({ networkUsage, host }) {
   const [chartType, setChartType] = useState("line");
   const [showWizard, setShowWizard] = useState(false);
 
+  const [networkGraphInstance, setNetworkGraphInstance] = useState(null);
+  const [networkDuration, setNetworkDuration] = useState(LAST_TIME_OPTIONS[0]);
+  const {
+    getNetworkGraphData,
+    state: { networkData },
+  } = useContext(DashboardContext);
+  let interval = null;
+
   useEffect(() => {
-    if (!instance) return;
-    const x = instance;
+    interval && clearInterval(interval);
+    updateNetworkGraphData();
+    interval = setInterval(() => {
+      updateNetworkGraphData();
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [networkUsage, networkDuration, host]);
+
+  const updateNetworkGraphData = () => {
+    getNetworkGraphData({
+      host: host.value,
+      network: networkUsage.value,
+      networkLastTime: networkDuration.value,
+    });
+  };
+
+  useEffect(() => {
+    setTimeout(() => {
+      setNetworkGraphInstance(am4core.create(NETWORK_CHART_DIV, am4charts.XYChart));
+    }, 3000);
+    return () => {
+      networkGraphInstance.dispose();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!networkGraphInstance) return;
+    networkGraphInstance.data = networkData.map(i => ({
+      value: i[0],
+      timestamp: i[1],
+    }));
+  }, [networkData, networkGraphInstance]);
+
+  useEffect(() => {
+    if (!networkGraphInstance) return;
+    const x = networkGraphInstance;
     x.paddingRight = 20;
     var categoryAxis = x.xAxes.push(new am4charts.CategoryAxis());
     categoryAxis.dataFields.category = "timestamp";
@@ -36,7 +78,7 @@ function NetworkChart({ instance, onSelectDuration }) {
     // categoryAxis.renderer.grid.template.location = 0.5
     categoryAxis.renderer.minGridDistance = 30;
     categoryAxis.renderer.fixedWidthGrid = 2;
-    categoryAxis.maxColumns = instance.data.length;
+    categoryAxis.maxColumns = networkGraphInstance.data.length;
     categoryAxis.startLocation = 0;
     categoryAxis.endLocation = 1;
     categoryAxis.fontSize = "9px";
@@ -87,18 +129,18 @@ function NetworkChart({ instance, onSelectDuration }) {
     // range.contents.fill = range.contents.stroke
     x.cursor = new am4charts.XYCursor();
     setShowWizard(true);
-  }, [instance]);
+  }, [networkGraphInstance]);
 
   useEffect(() => {
-    if (!instance) return;
+    if (!networkGraphInstance) return;
     if (chartType === "line") {
-      instance.series._values[0].show();
-      instance.series._values[1].hide();
+      networkGraphInstance.series._values[0].show();
+      networkGraphInstance.series._values[1].hide();
     } else {
-      instance.series._values[0].hide();
-      instance.series._values[1].show();
+      networkGraphInstance.series._values[0].hide();
+      networkGraphInstance.series._values[1].show();
     }
-  }, [chartType]);
+  }, [chartType, networkGraphInstance]);
 
   const onChange = (e) => {
     setChartType(e.target.value);
@@ -112,7 +154,7 @@ function NetworkChart({ instance, onSelectDuration }) {
           <Select
             defaultValue={LAST_TIME_OPTIONS[0]}
             styles={customStyles}
-            onChange={onSelectDuration}
+            onChange={setNetworkDuration}
             options={LAST_TIME_OPTIONS}
             isSearchable={false}
           />

@@ -1,12 +1,51 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useContext, useState } from "react";
+import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import { MEMORY_CHART_DIV } from "../../constants";
+import { Context as DashboardContext } from "../../context/dashboard";
 
-function MemoryChart({ instance }) {
-  console.log("Rendering Memory Chart...");
+function MemoryChart({ host }) {
+  const [memoryGraphInstance, setMemoryGraphInstance] = useState(null);
+  const {
+    getMemoryGraphData,
+    state: { memoryData },
+  } = useContext(DashboardContext);
+  let interval = null;
+
   useEffect(() => {
-    if (!instance) return;
-    const x = instance;
+    interval && clearInterval(interval);
+    updateMemoryGraphData();
+    interval = setInterval(() => {
+      updateMemoryGraphData();
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [host]);
+
+  const updateMemoryGraphData = () => {
+    getMemoryGraphData({
+      host: host.value,
+    });
+  };
+
+  useEffect(() => {
+    setTimeout(() => {
+      setMemoryGraphInstance(
+        am4core.create(MEMORY_CHART_DIV, am4charts.PieChart)
+      );
+    }, 3000);
+    return () => {
+      memoryGraphInstance.dispose();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!memoryGraphInstance) return;
+    memoryGraphInstance.data = memoryData;
+  }, [memoryData, memoryGraphInstance]);
+
+  useEffect(() => {
+    if (!memoryGraphInstance) return;
+    const x = memoryGraphInstance;
     // Add and configure Series
     var pieSeries = x.series.push(new am4charts.PieSeries());
     pieSeries.dataFields.value = "percentage";
@@ -24,7 +63,7 @@ function MemoryChart({ instance }) {
     x.legend = new am4charts.Legend();
     x.legend.fontSize = 12;
     x.legend.position = "right";
-  }, [instance]);
+  }, [memoryGraphInstance]);
 
   return (
     <div className="memory-chart-card">

@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import Select from "react-select";
 import moment from "moment";
 import { CPU_CHART_DIV, LAST_TIME_OPTIONS } from "../../constants";
-
+import { Context as DashboardContext } from "../../context/dashboard";
 const customStyles = {
   option: (provided, state) => ({
     ...provided,
@@ -21,14 +21,55 @@ const customStyles = {
   }),
 };
 
-function CpuChart({ instance, onSelectDuration }) {
-  console.log("Rendering CPU Chart...");
+function CpuChart({ host, cpuMetric }) {
+  const [cpuGraphInstance, setCpuGraphInstance] = useState(null);
   const [chartType, setChartType] = useState("line");
   const [showWizard, setShowWizard] = useState(false);
+  const [cpuDuration, setCpuDuration] = useState(LAST_TIME_OPTIONS[0]);
+  
+  const {
+    getCPUGraphData,
+    state: { cpuData },
+  } = useContext(DashboardContext);
+  let interval = null;
 
   useEffect(() => {
-    if (!instance) return;
-    const x = instance;
+    interval && clearInterval(interval);
+    updateCPUGraphData();
+    interval = setInterval(() => {
+      updateCPUGraphData();
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [cpuMetric, cpuDuration, host]);
+
+  const updateCPUGraphData = () => {
+    getCPUGraphData({
+      host: host.value,
+      cpu: cpuMetric.value,
+      cpuLastTime: cpuDuration.value,
+    });
+  };
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCpuGraphInstance(am4core.create(CPU_CHART_DIV, am4charts.XYChart));
+    }, 3000);
+    return () => {
+      cpuGraphInstance.dispose();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!cpuGraphInstance) return;
+    cpuGraphInstance.data = cpuData.map(i => ({
+      value: i[0],
+      timestamp: i[1],
+    }));
+  }, [cpuData, cpuGraphInstance]);
+
+  useEffect(() => {
+    if (!cpuGraphInstance) return;
+    const x = cpuGraphInstance;
     x.paddingRight = 20;
     var categoryAxis = x.xAxes.push(new am4charts.CategoryAxis());
     categoryAxis.dataFields.category = "timestamp";
@@ -36,7 +77,7 @@ function CpuChart({ instance, onSelectDuration }) {
     // categoryAxis.renderer.grid.template.location = 0.5
     categoryAxis.renderer.minGridDistance = 30;
     categoryAxis.renderer.fixedWidthGrid = 2;
-    categoryAxis.maxColumns = instance.data.length;
+    categoryAxis.maxColumns = cpuGraphInstance.data.length;
     categoryAxis.startLocation = 0;
     categoryAxis.endLocation = 1;
     categoryAxis.fontSize = "9px";
@@ -87,18 +128,18 @@ function CpuChart({ instance, onSelectDuration }) {
     range.contents.fill = range.contents.stroke;
     x.cursor = new am4charts.XYCursor();
     setShowWizard(true);
-  }, [instance]);
+  }, [cpuGraphInstance]);
 
   useEffect(() => {
-    if (!instance) return;
+    if (!cpuGraphInstance) return;
     if (chartType === "line") {
-      instance.series._values[0].show();
-      instance.series._values[1].hide();
+      cpuGraphInstance.series._values[0].show();
+      cpuGraphInstance.series._values[1].hide();
     } else {
-      instance.series._values[0].hide();
-      instance.series._values[1].show();
+      cpuGraphInstance.series._values[0].hide();
+      cpuGraphInstance.series._values[1].show();
     }
-  }, [chartType]);
+  }, [chartType, cpuGraphInstance]);
 
   const onChange = (e) => {
     setChartType(e.target.value);
@@ -112,7 +153,7 @@ function CpuChart({ instance, onSelectDuration }) {
           <Select
             defaultValue={LAST_TIME_OPTIONS[0]}
             styles={customStyles}
-            onChange={onSelectDuration}
+            onChange={setCpuDuration}
             options={LAST_TIME_OPTIONS}
             isSearchable={false}
           />
