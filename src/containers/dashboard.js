@@ -36,11 +36,9 @@ const customStyles = {
 
 function Dashboard() {
   const [selectedHost, selectHost] = useState(HOST_NAME_LIST[0]);
-
   // metric options for cpu and network graph
   const [cpuMetric, setCpuMetric] = useState(CPU_METRICS[0]);
   const [networkUsage, setNetworkUsage] = useState(NETWORK_USAGES[0]);
-
 
   return (
     <div className="App">

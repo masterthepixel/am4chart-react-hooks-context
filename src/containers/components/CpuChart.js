@@ -26,7 +26,7 @@ function CpuChart({ host, cpuMetric }) {
   const [chartType, setChartType] = useState("line");
   const [showWizard, setShowWizard] = useState(false);
   const [cpuDuration, setCpuDuration] = useState(LAST_TIME_OPTIONS[0]);
-  
+
   const {
     getCPUGraphData,
     state: { cpuData },
@@ -73,11 +73,14 @@ function CpuChart({ host, cpuMetric }) {
     x.paddingRight = 20;
     var categoryAxis = x.xAxes.push(new am4charts.CategoryAxis());
     categoryAxis.dataFields.category = "timestamp";
-    categoryAxis.visible = false;
+    // categoryAxis.visible = false;
     // categoryAxis.renderer.grid.template.location = 0.5
-    categoryAxis.renderer.minGridDistance = 30;
     categoryAxis.renderer.fixedWidthGrid = 2;
-    categoryAxis.maxColumns = cpuGraphInstance.data.length;
+    categoryAxis.renderer.labels.template.adapter.add("text", (label, target, key) => {
+      const number = target.dataItem.properties.category;
+      return moment(number * 1000).format("hh:mm A");
+    });
+    categoryAxis.renderer.minGridDistance = 80;
     categoryAxis.startLocation = 0;
     categoryAxis.endLocation = 1;
     categoryAxis.fontSize = "9px";
@@ -159,6 +162,7 @@ function CpuChart({ host, cpuMetric }) {
           />
         </div>
       </div>
+      <center className="chart-title">{`CPU - ${cpuMetric.label}`}</center>
       <div className="chart-area">
         <div id={CPU_CHART_DIV} style={{ width: "100%", height: "300px" }}></div>
       </div>

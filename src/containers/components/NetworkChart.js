@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import Select from "react-select";
@@ -74,11 +74,15 @@ function NetworkChart({ networkUsage, host }) {
     x.paddingRight = 20;
     var categoryAxis = x.xAxes.push(new am4charts.CategoryAxis());
     categoryAxis.dataFields.category = "timestamp";
-    categoryAxis.visible = false;
+    // categoryAxis.visible = false;
     // categoryAxis.renderer.grid.template.location = 0.5
     categoryAxis.renderer.minGridDistance = 30;
     categoryAxis.renderer.fixedWidthGrid = 2;
-    categoryAxis.maxColumns = networkGraphInstance.data.length;
+    categoryAxis.renderer.labels.template.adapter.add("text", (label, target, key) => {
+      const number = target.dataItem.properties.category;
+      return moment(number * 1000).format("hh:mm A");
+    });
+    categoryAxis.renderer.minGridDistance = 80;
     categoryAxis.startLocation = 0;
     categoryAxis.endLocation = 1;
     categoryAxis.fontSize = "9px";
@@ -160,6 +164,7 @@ function NetworkChart({ networkUsage, host }) {
           />
         </div>
       </div>
+      <center className="chart-title">{`Network - ${networkUsage.label}`}</center>
       <div className="chart-area">
         <div id={NETWORK_CHART_DIV} style={{ width: "100%", height: "300px" }}></div>
       </div>

@@ -60,15 +60,17 @@ function MemoryChart({ host }) {
 
     pieSeries.slices.template.states.getKey("hover").properties.shiftRadius = 0;
     pieSeries.slices.template.states.getKey("hover").properties.scale = 1.1;
+    pieSeries.slices.template.states.getKey("hover").properties.fillOpacity = 0.5;
     x.legend = new am4charts.Legend();
     x.legend.fontSize = 12;
-    x.legend.position = "right";
+    x.legend.position = "bottom";
   }, [memoryGraphInstance]);
 
   return (
     <div className="memory-chart-card">
+      <center className="chart-title">Current Memory Usage</center>
       <div className="chart-area">
-        <div id={MEMORY_CHART_DIV} style={{ width: "100%", height: "250px" }}></div>
+        <div id={MEMORY_CHART_DIV} style={{ width: "100%", height: "400px" }}></div>
       </div>
     </div>
   );
