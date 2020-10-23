@@ -25,9 +25,10 @@ const customStyles = {
 function NetworkChart({ networkUsage, host }) {
   const [chartType, setChartType] = useState("line");
   const [showWizard, setShowWizard] = useState(false);
-
   const [networkGraphInstance, setNetworkGraphInstance] = useState(null);
   const [networkDuration, setNetworkDuration] = useState(LAST_TIME_OPTIONS[0]);
+  const mountedRef = useRef(true);
+
   const {
     getNetworkGraphData,
     state: { networkData },
@@ -53,10 +54,11 @@ function NetworkChart({ networkUsage, host }) {
 
   useEffect(() => {
     setTimeout(() => {
-      setNetworkGraphInstance(am4core.create(NETWORK_CHART_DIV, am4charts.XYChart));
+      mountedRef.current && setNetworkGraphInstance(am4core.create(NETWORK_CHART_DIV, am4charts.XYChart));
     }, 3000);
     return () => {
       networkGraphInstance.dispose();
+      mountedRef.current = false;
     };
   }, []);
 

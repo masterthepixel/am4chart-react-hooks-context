@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import Select from "react-select";
@@ -26,7 +26,7 @@ function CpuChart({ host, cpuMetric }) {
   const [chartType, setChartType] = useState("line");
   const [showWizard, setShowWizard] = useState(false);
   const [cpuDuration, setCpuDuration] = useState(LAST_TIME_OPTIONS[0]);
-
+  const mountedRef = useRef(true);
   const {
     getCPUGraphData,
     state: { cpuData },
@@ -52,9 +52,10 @@ function CpuChart({ host, cpuMetric }) {
 
   useEffect(() => {
     setTimeout(() => {
-      setCpuGraphInstance(am4core.create(CPU_CHART_DIV, am4charts.XYChart));
+      mountedRef.current && setCpuGraphInstance(am4core.create(CPU_CHART_DIV, am4charts.XYChart));
     }, 3000);
     return () => {
+      mountedRef.current = false;
       cpuGraphInstance.dispose();
     };
   }, []);

@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useState } from "react";
+import React, { useEffect, useContext, useState, useRef } from "react";
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import { MEMORY_CHART_DIV } from "../../constants";
@@ -6,6 +6,8 @@ import { Context as DashboardContext } from "../../context/dashboard";
 
 function MemoryChart({ host }) {
   const [memoryGraphInstance, setMemoryGraphInstance] = useState(null);
+  const mountedRef = useRef(true);
+
   const {
     getMemoryGraphData,
     state: { memoryData },
@@ -29,12 +31,13 @@ function MemoryChart({ host }) {
 
   useEffect(() => {
     setTimeout(() => {
-      setMemoryGraphInstance(
+      mountedRef.current && setMemoryGraphInstance(
         am4core.create(MEMORY_CHART_DIV, am4charts.PieChart)
       );
     }, 3000);
     return () => {
       memoryGraphInstance.dispose();
+      mountedRef.current = false;
     };
   }, []);
 

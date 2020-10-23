@@ -20,8 +20,8 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
-app.post("/data", async function (req, res, next) {
-  await fetch(req.body.path, {
+app.post("/data", function (req, res, next) {
+  fetch(req.body.path, {
     headers: {
       "Accept": "application/json",
       "Authorization": `Basic ${base64.encode("tester:testing")}`
